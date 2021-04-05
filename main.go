@@ -152,11 +152,13 @@ func (c *Controller) runWorker() {
 
 var (
 	argSinks string
+	argNamespace string
 )
 
 func main() {
 	//"mysql:?root:password@tcp(192.168.50.12:31112)/events?charset=utf8"
 	flag.StringVar(&argSinks, "sink", "", "external sink(s) that receive events")
+	flag.StringVar(&argNamespace, "ns", "default", "external sink(s) that receive events")
 	flag.Parse()
 
 	//u, err := url.Parse("http://bing.com/search?q=dotnet")
@@ -193,7 +195,7 @@ func main() {
 	}
 
 	// create the pod watcher
-	podListWatcher := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "pods", v1.NamespaceDefault, fields.Everything())
+	podListWatcher := cache.NewListWatchFromClient(clientset.CoreV1().RESTClient(), "pods", argNamespace, fields.Everything())
 
 	// create the workqueue
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
