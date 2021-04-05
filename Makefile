@@ -34,7 +34,7 @@ endif
 test-unit-cov: clean sanitize build
 	hack/coverage.sh
 
-docker-container:
+docker-build:
 	docker build --pull -t $(PREFIX)/pod-event-$(ARCH):$(VERSION)-$(GIT_COMMIT)-aliyun -f Dockerfile .
 
 clean:
