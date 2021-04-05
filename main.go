@@ -22,10 +22,8 @@ import (
 	mysql_common "events.com/pod/mysql/tool"
 	"flag"
 	"fmt"
-	"k8s.io/client-go/util/homedir"
 	"k8s.io/klog/v2"
 	"net/url"
-	"path/filepath"
 	"reflect"
 	"time"
 
@@ -151,7 +149,7 @@ func (c *Controller) runWorker() {
 }
 
 var (
-	argSinks string
+	argSinks     string
 	argNamespace string
 )
 
@@ -174,11 +172,7 @@ func main() {
 
 	var kubeconfig string
 	var master string
-	if home := homedir.HomeDir(); home != "" {
-		flag.StringVar(&kubeconfig, "kubeconfig", filepath.Join(home, ".kube", "config"), "absolute path to the kubeconfig file")
-	} else {
-		flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
-	}
+	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")
 	flag.Parse()
 
