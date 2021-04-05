@@ -154,6 +154,11 @@ var (
 )
 
 func main() {
+
+	var kubeconfig string
+	var master string
+	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
+	flag.StringVar(&master, "master", "", "master url")
 	//"mysql:?root:password@tcp(192.168.50.12:31112)/events?charset=utf8"
 	flag.StringVar(&argSinks, "sink", "", "external sink(s) that receive events")
 	flag.StringVar(&argNamespace, "ns", "default", "external sink(s) that receive events")
@@ -170,11 +175,6 @@ func main() {
 	}
 	defer mysqlSvc.Stop()
 
-	var kubeconfig string
-	var master string
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
-	flag.StringVar(&master, "master", "", "master url")
-	flag.Parse()
 
 	// creates the connection
 	config, err := clientcmd.BuildConfigFromFlags(master, kubeconfig)

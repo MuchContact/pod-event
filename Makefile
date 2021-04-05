@@ -35,7 +35,7 @@ test-unit-cov: clean sanitize build
 	hack/coverage.sh
 
 docker-build:
-	docker build --pull -t $(PREFIX)/pod-event-$(ARCH):$(VERSION)-$(GIT_COMMIT)-aliyun -f Dockerfile .
+	docker build --pull -t $(PREFIX)/pod-event:latest -f Dockerfile .
 
 clean:
 	rm -f pod-event
