@@ -17,7 +17,7 @@ fmt:
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs gofmt -s -w
 
 build: clean
-	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(KUBE_EVENTER_LDFLAGS)" -o pod-event events.com/pod 
+	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(KUBE_EVENTER_LDFLAGS)" -o bin/pod-event events.com/pod
 
 sanitize:
 	hack/check_gofmt.sh

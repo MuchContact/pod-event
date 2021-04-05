@@ -10,7 +10,7 @@ RUN make
 
 FROM alpine:3.11.6
 
-COPY --from=build-env /src/events.com/pod/pod-event /
+COPY --from=build-env /src/events.com/pod/bin/pod-event /
 COPY --from=build-env /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENV TZ "Asia/Shanghai"

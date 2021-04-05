@@ -150,9 +150,17 @@ func (c *Controller) runWorker() {
 	}
 }
 
+var (
+	argSinks string
+)
+
 func main() {
+	//"mysql:?root:password@tcp(192.168.50.12:31112)/events?charset=utf8"
+	flag.StringVar(&argSinks, "sink", "", "external sink(s) that receive events")
+	flag.Parse()
+
 	//u, err := url.Parse("http://bing.com/search?q=dotnet")
-	uri, err3 := url.Parse("mysql:?root:password@tcp(192.168.50.12:31112)/events?charset=utf8")
+	uri, err3 := url.Parse(argSinks)
 	if err3 != nil {
 		klog.Fatal("", err3)
 	}
