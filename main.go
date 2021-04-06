@@ -25,6 +25,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/tools/clientcmd"
 	"regexp"
 	"strings"
 
@@ -35,7 +36,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	"net/url"
@@ -181,11 +181,12 @@ func main() {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		klog.Warning(err)
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			klog.Fatal(err)
+		}
 	}
-	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		klog.Fatal(err)
-	}
+
 
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
@@ -310,7 +311,8 @@ func main() {
 func parseReason(old interface{}, new interface{}) string {
 	pod := new.(*v1.Pod)
 	oldPod := old.(*v1.Pod)
-	diff := diff.ObjectDiff(pod.Status, oldPod.Status)
+	diff := diff.ObjectDiff(oldPod.Status, pod.Status)
+	fmt.Println(diff)
 	split := strings.Split(diff, "\n")
 	reg := regexp.MustCompile(`(Reason:)([^,]*)(,)`)
 	for i := 0; i < len(split); i++ {
