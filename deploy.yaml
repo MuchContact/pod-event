@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kube-event-config
-  namespace: kube-system
+#  namespace: kube-system
 data:
   config.yaml: |
     namespaces:
@@ -17,7 +17,7 @@ metadata:
   labels:
     name: kube-pod-event
   name: kube-pod-event
-  namespace: kube-system
+#  namespace: kube-system
 spec:
   replicas: 1
   selector:
@@ -30,15 +30,12 @@ spec:
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
-      dnsPolicy: ClusterFirstWithHostNet
-      serviceAccount: kube-pod-event
       containers:
-        - image: registry.cn-hangzhou.aliyuncs.com/muco/pod-event:latest
+        - image: registry.cn-hangzhou.aliyuncs.com/muco/pod-event:incluster
           imagePullPolicy: "Always"
           name: kube-pod-event
           command:
             - "/pod-event"
-            - "--kubeconfig=/.kube/config"
             - "--ns=default"
             - "--sink=mysql:?root:password@tcp(192.168.50.12:31112)/events?charset=utf8"
           env:
@@ -52,9 +49,6 @@ spec:
             - name: zoneinfo
               mountPath: /usr/share/zoneinfo
               readOnly: true
-            - name: pod-event-cm
-              mountPath: /.kube/config
-              subPath: config.yaml
           resources:
             requests:
               cpu: 100m

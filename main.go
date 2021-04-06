@@ -22,20 +22,20 @@ import (
 	mysql_common "events.com/pod/mysql/tool"
 	"flag"
 	"fmt"
-	"k8s.io/client-go/rest"
-	"k8s.io/klog/v2"
-	"net/url"
-	"reflect"
-	"time"
-
+	"github.com/google/go-cmp/cmp"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/klog/v2"
+	"net/url"
+	"reflect"
+	"time"
 )
 
 // Controller demonstrates how to implement a controller with client-go.
@@ -219,6 +219,7 @@ func main() {
 		UpdateFunc: func(old interface{}, new interface{}) {
 			switch new.(type) {
 			case *v1.Pod:
+				diff := cmp.Diff(old, new)
 				pod := new.(*v1.Pod)
 				marshal, _ := json.Marshal(pod.Status)
 				fmt.Printf("[U]name: %s, status: %s \n", pod.Name, marshal)
@@ -227,7 +228,7 @@ func main() {
 					Namespace:   pod.Namespace,
 					Kind:        "UPDATE",
 					Type:        string(pod.Status.Phase),
-					Reason:      "",
+					Reason:      diff,
 					Message:     string(marshal),
 					TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
 				}
