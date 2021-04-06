@@ -22,6 +22,7 @@ import (
 	mysql_common "events.com/pod/mysql/tool"
 	"flag"
 	"fmt"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"net/url"
 	"reflect"
@@ -34,7 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
 )
 
@@ -155,10 +155,6 @@ var (
 
 func main() {
 
-	var kubeconfig string
-	var master string
-	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
-	flag.StringVar(&master, "master", "", "master url")
 	//"mysql:?root:password@tcp(192.168.50.12:31112)/events?charset=utf8"
 	flag.StringVar(&argSinks, "sink", "", "external sink(s) that receive events")
 	flag.StringVar(&argNamespace, "ns", "default", "external sink(s) that receive events")
@@ -175,9 +171,8 @@ func main() {
 	}
 	defer mysqlSvc.Stop()
 
-
 	// creates the connection
-	config, err := clientcmd.BuildConfigFromFlags(master, kubeconfig)
+	config, err := rest.InClusterConfig()
 	if err != nil {
 		klog.Fatal(err)
 	}
