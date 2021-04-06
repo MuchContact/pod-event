@@ -22,15 +22,20 @@ import (
 	mysql_common "events.com/pod/mysql/tool"
 	"flag"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"regexp"
+	"strings"
+
+	//"github.com/google/go-cmp/cmp"
+	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	"net/url"
@@ -154,8 +159,9 @@ var (
 )
 
 func main() {
-
+	var kubeconfig string
 	//"mysql:?root:password@tcp(192.168.50.12:31112)/events?charset=utf8"
+	flag.StringVar(&kubeconfig, "kubeconfig", "", "external sink(s) that receive events")
 	flag.StringVar(&argSinks, "sink", "", "external sink(s) that receive events")
 	flag.StringVar(&argNamespace, "ns", "default", "external sink(s) that receive events")
 	flag.Parse()
@@ -173,6 +179,10 @@ func main() {
 
 	// creates the connection
 	config, err := rest.InClusterConfig()
+	if err != nil {
+		klog.Warning(err)
+	}
+	config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		klog.Fatal(err)
 	}
@@ -219,8 +229,9 @@ func main() {
 		UpdateFunc: func(old interface{}, new interface{}) {
 			switch new.(type) {
 			case *v1.Pod:
-				diff := cmp.Diff(old, new)
+				reason := parseReason(old, new)
 				pod := new.(*v1.Pod)
+
 				marshal, _ := json.Marshal(pod.Status)
 				fmt.Printf("[U]name: %s, status: %s \n", pod.Name, marshal)
 				point := &mysql_common.MysqlKubeEventPoint{
@@ -228,7 +239,7 @@ func main() {
 					Namespace:   pod.Namespace,
 					Kind:        "UPDATE",
 					Type:        string(pod.Status.Phase),
-					Reason:      diff,
+					Reason:      reason,
 					Message:     string(marshal),
 					TriggerTime: time.Now().Format("2006-01-02 15:04:05"),
 				}
@@ -294,4 +305,24 @@ func main() {
 
 	// Wait forever
 	select {}
+}
+
+func parseReason(old interface{}, new interface{}) string {
+	pod := new.(*v1.Pod)
+	oldPod := old.(*v1.Pod)
+	diff := diff.ObjectDiff(pod.Status, oldPod.Status)
+	split := strings.Split(diff, "\n")
+	reg := regexp.MustCompile(`(Reason:)([^,]*)(,)`)
+	for i := 0; i < len(split); i++ {
+		line := split[i]
+		prefix := strings.HasPrefix(line, "+")
+		if prefix {
+			findAllString := reg.FindAllString(line, 1)
+			if len(findAllString) > 0 {
+				allString := reg.ReplaceAllString(findAllString[0], "$2")
+				return allString
+			}
+		}
+	}
+	return ""
 }
